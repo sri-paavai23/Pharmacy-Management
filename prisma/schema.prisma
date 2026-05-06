@@ -1,0 +1,273 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model accountgroup {
+  id     String   @id
+  name   String
+  nature String
+  ledger ledger[]
+}
+
+model batch {
+  id              String            @id
+  productId       String
+  batchNumber     String
+  expiryDate      DateTime
+  mrp             Float
+  purchasePrice   Float
+  sellingPrice    Float             @default(0)
+  currentStock    Int
+  locationRack    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  product         product           @relation(fields: [productId], references: [id], map: "Batch_productId_fkey")
+  purchaseitem    purchaseitem[]
+  saleitem        saleitem[]
+  stockadjustment stockadjustment[]
+
+  @@index([productId], map: "Batch_productId_fkey")
+}
+
+model businesssettings {
+  id           String   @id @default("1")
+  pharmacyName String
+  dlNumber     String
+  gstin        String
+  contactInfo  String
+  ownerDetails String
+  updatedAt    DateTime
+}
+
+model customer {
+  id              String         @id
+  name            String
+  phone           String?
+  address         String?
+  isSeniorCitizen Boolean        @default(false)
+  ledgerId        String?
+  ledger          ledger?        @relation(fields: [ledgerId], references: [id], map: "Customer_ledgerId_fkey")
+  sale            sale[]
+  subscription    subscription[]
+
+  @@index([ledgerId], map: "Customer_ledgerId_fkey")
+}
+
+model doctor {
+  id                 String  @id
+  name               String
+  registrationNumber String
+  phone              String?
+  sale               sale[]
+}
+
+model financialyear {
+  id           String         @id
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean        @default(false)
+  isClosed     Boolean        @default(false)
+  journalentry journalentry[]
+  ledger       ledger[]
+  purchase     purchase[]
+  sale         sale[]
+}
+
+model journalentry {
+  id              String        @id
+  voucherNumber   String        @unique(map: "JournalEntry_voucherNumber_key")
+  voucherType     String
+  date            DateTime      @default(now())
+  financialYearId String
+  narration       String?
+  saleId          String?       @unique(map: "JournalEntry_saleId_key")
+  purchaseId      String?       @unique(map: "JournalEntry_purchaseId_key")
+  financialyear   financialyear @relation(fields: [financialYearId], references: [id], map: "JournalEntry_financialYearId_fkey")
+  purchase        purchase?     @relation(fields: [purchaseId], references: [id], map: "JournalEntry_purchaseId_fkey")
+  sale            sale?         @relation(fields: [saleId], references: [id], map: "JournalEntry_saleId_fkey")
+  journalline     journalline[]
+
+  @@index([financialYearId], map: "JournalEntry_financialYearId_fkey")
+}
+
+model journalline {
+  id             String       @id
+  journalEntryId String
+  ledgerId       String
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+  journalentry   journalentry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade, map: "JournalLine_journalEntryId_fkey")
+  ledger         ledger       @relation(fields: [ledgerId], references: [id], map: "JournalLine_ledgerId_fkey")
+
+  @@index([journalEntryId], map: "JournalLine_journalEntryId_fkey")
+  @@index([ledgerId], map: "JournalLine_ledgerId_fkey")
+}
+
+model ledger {
+  id              String        @id
+  groupId         String
+  name            String
+  financialYearId String
+  openingBalance  Float         @default(0)
+  balanceType     String
+  currentBalance  Float         @default(0)
+  customer        customer[]
+  journalline     journalline[]
+  financialyear   financialyear @relation(fields: [financialYearId], references: [id], map: "Ledger_financialYearId_fkey")
+  accountgroup    accountgroup  @relation(fields: [groupId], references: [id], map: "Ledger_groupId_fkey")
+  vendor          vendor[]
+
+  @@index([financialYearId], map: "Ledger_financialYearId_fkey")
+  @@index([groupId], map: "Ledger_groupId_fkey")
+}
+
+model product {
+  id                     String                      @id
+  name                   String
+  manufacturer           String
+  category               String
+  hsnCode                String
+  taxRate                Float                       @default(12)
+  isPrescriptionRequired Boolean                     @default(false)
+  scheduleH1             Boolean                     @default(false)
+  packSize               Int                         @default(1)
+  embedding              Unsupported("vector(384)")?
+  batch                  batch[]
+
+  @@fulltext([name], map: "Product_name_idx")
+}
+
+model purchase {
+  id              String         @id
+  vendorId        String
+  invoiceNumber   String         @unique(map: "Purchase_invoiceNumber_key")
+  totalAmount     Float
+  status          String
+  financialYearId String
+  date            DateTime       @default(now())
+  journalentry    journalentry?
+  financialyear   financialyear  @relation(fields: [financialYearId], references: [id], map: "Purchase_financialYearId_fkey")
+  vendor          vendor         @relation(fields: [vendorId], references: [id], map: "Purchase_vendorId_fkey")
+  purchaseitem    purchaseitem[]
+
+  @@index([financialYearId], map: "Purchase_financialYearId_fkey")
+  @@index([vendorId], map: "Purchase_vendorId_fkey")
+}
+
+model purchaseitem {
+  id            String   @id
+  purchaseId    String
+  batchId       String
+  quantity      Int
+  purchasePrice Float
+  batch         batch    @relation(fields: [batchId], references: [id], map: "PurchaseItem_batchId_fkey")
+  purchase      purchase @relation(fields: [purchaseId], references: [id], map: "PurchaseItem_purchaseId_fkey")
+
+  @@index([batchId], map: "PurchaseItem_batchId_fkey")
+  @@index([purchaseId], map: "PurchaseItem_purchaseId_fkey")
+}
+
+model sale {
+  id              String        @id
+  invoiceNumber   String        @unique(map: "Sale_invoiceNumber_key")
+  customerId      String?
+  doctorId        String?
+  totalAmount     Float
+  totalProfit     Float
+  totalTax        Float
+  paymentMode     String        @default("CASH")
+  roundOff        Float         @default(0)
+  source          String        @default("POS") // "POS", "COUNTER", "SENIOR_CARE"
+  financialYearId String
+  createdAt       DateTime      @default(now())
+  journalentry    journalentry?
+  customer        customer?     @relation(fields: [customerId], references: [id], map: "Sale_customerId_fkey")
+  doctor          doctor?       @relation(fields: [doctorId], references: [id], map: "Sale_doctorId_fkey")
+  financialyear   financialyear @relation(fields: [financialYearId], references: [id], map: "Sale_financialYearId_fkey")
+  saleitem        saleitem[]
+  salesreturn     salesreturn[]
+
+  @@index([customerId], map: "Sale_customerId_fkey")
+  @@index([doctorId], map: "Sale_doctorId_fkey")
+  @@index([financialYearId], map: "Sale_financialYearId_fkey")
+}
+
+model saleitem {
+  id                String @id
+  saleId            String
+  batchId           String
+  quantity          Int
+  unitPrice         Float
+  unitPurchasePrice Float
+  batch             batch  @relation(fields: [batchId], references: [id], map: "SaleItem_batchId_fkey")
+  sale              sale   @relation(fields: [saleId], references: [id], map: "SaleItem_saleId_fkey")
+
+  @@index([batchId], map: "SaleItem_batchId_fkey")
+  @@index([saleId], map: "SaleItem_saleId_fkey")
+}
+
+model salesreturn {
+  id             String   @id
+  originalSaleId String
+  refundAmount   Float
+  reason         String
+  date           DateTime @default(now())
+  sale           sale     @relation(fields: [originalSaleId], references: [id], map: "SalesReturn_originalSaleId_fkey")
+
+  @@index([originalSaleId], map: "SalesReturn_originalSaleId_fkey")
+}
+
+model stockadjustment {
+  id        String   @id
+  batchId   String
+  type      String
+  reason    String
+  quantity  Int
+  createdAt DateTime @default(now())
+  batch     batch    @relation(fields: [batchId], references: [id], map: "StockAdjustment_batchId_fkey")
+
+  @@index([batchId], map: "StockAdjustment_batchId_fkey")
+}
+
+model subscription {
+  id               String   @id
+  customerId       String
+  medicines        String
+  frequencyDays    Int      @default(30)
+  nextDeliveryDate DateTime
+  deliveryStatus   String   @default("Pending")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  customer         customer @relation(fields: [customerId], references: [id], map: "Subscription_customerId_fkey")
+
+  @@index([customerId], map: "Subscription_customerId_fkey")
+}
+
+model user {
+  id        String   @id
+  name      String
+  pinCode   String
+  role      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model vendor {
+  id            String     @id
+  companyName   String
+  contactPerson String
+  phone         String
+  gstin         String
+  ledgerId      String?
+  purchase      purchase[]
+  ledger        ledger?    @relation(fields: [ledgerId], references: [id], map: "Vendor_ledgerId_fkey")
+
+  @@index([ledgerId], map: "Vendor_ledgerId_fkey")
+}
