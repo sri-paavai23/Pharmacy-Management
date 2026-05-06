@@ -79,7 +79,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
       sellingPrice: item.Batch.sellingPrice,
       currentStock: item.quantity * Math.max(1, item.Batch.Product.packSize), // Loose tablets input
       packSize: item.Batch.Product.packSize,
-      locationRack: item.Batch.locationRack,
+      locationRack: item.Batch.locationRack || "",
       discount: 0
     })));
     setActiveTab("new");

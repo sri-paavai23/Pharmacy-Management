@@ -46,8 +46,7 @@ export default async function SeniorCarePage() {
         <p className="text-slate-500 mt-1 pl-5">Manage monthly medicine deliveries</p>
       </div>
       
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <SeniorCareClient subscriptions={subscriptions as any} products={productsWithBatches as any} />
+      <SeniorCareClient subscriptions={subscriptions} products={productsWithBatches} />
     </div>
   );
 }

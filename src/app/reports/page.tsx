@@ -162,15 +162,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: { pe
       totalTax={totalTax}
       chartData={Array.from(chartMap.values())}
       profitByItem={Array.from(itemProfitMap.values()).sort((a, b) => b.profit - a.profit)}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      h1Sales={h1Sales as any}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      journalEntries={journalEntries as any}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ledgers={ledgers as any}
+      h1Sales={h1Sales}
+      journalEntries={journalEntries}
+      ledgers={ledgers}
       taxBySlab={Object.fromEntries(taxBySlab)}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      stockProducts={stockProducts as any}
+      stockProducts={stockProducts}
     />
   );
 }

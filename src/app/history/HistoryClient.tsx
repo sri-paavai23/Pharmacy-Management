@@ -22,7 +22,7 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
   const [selectedSale, setSelectedSale] = useState<SaleDetailed | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editItems, setEditItems] = useState<{ batchId: string; quantity: number; unitPrice: number; unitPurchasePrice: number; Product: product; Batch: batch; id: string }[]>([]);
+  const [editItems, setEditItems] = useState<{ batchId: string; quantity: number; unitPrice: number; unitPurchasePrice: number; Product?: product; Batch: batch & { Product?: product }; id: string }[]>([]);
   const [productSearch, setProductSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [editTotal, setEditTotal] = useState(0);
@@ -111,7 +111,8 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
       const autoSubtotal = validItems.reduce((acc, item) => acc + (item.unitPrice * (item.quantity as number)), 0);
       const totalTax = validItems.reduce((acc, item) => {
         const itemTotal = item.unitPrice * (item.quantity as number);
-        return acc + (itemTotal - (itemTotal / (1 + (item.Product.taxRate / 100))));
+        const taxRate = item.Product?.taxRate || item.Batch?.Product?.taxRate || 0;
+        return acc + (itemTotal - (itemTotal / (1 + (taxRate / 100))));
       }, 0);
 
       // Manual grand total from state, or auto if not touched
@@ -185,12 +186,12 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
                   <span className={`text-xs font-black px-2 py-0.5 rounded ${selectedSale?.id === s.id ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
                     ₹{s.totalAmount.toFixed(2)}
                   </span>
-                  {(s as any).source && (
-                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${(s as any).source === 'COUNTER' ? 'bg-amber-100 text-amber-700' :
-                      (s as any).source === 'SENIOR_CARE' ? 'bg-blue-100 text-blue-700' :
+                  {s.source && (
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${s.source === 'COUNTER' ? 'bg-amber-100 text-amber-700' :
+                      s.source === 'SENIOR_CARE' ? 'bg-blue-100 text-blue-700' :
                         'bg-slate-100 text-slate-600'
                       }`}>
-                      {(s as any).source}
+                      {s.source}
                     </span>
                   )}
                 </div>
@@ -217,12 +218,12 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-black text-slate-800 tracking-tight">{selectedSale.invoiceNumber}</h2>
-                  {(selectedSale as any).source && (
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${(selectedSale as any).source === 'COUNTER' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                      (selectedSale as any).source === 'SENIOR_CARE' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                  {selectedSale.source && (
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${selectedSale.source === 'COUNTER' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                      selectedSale.source === 'SENIOR_CARE' ? 'bg-blue-50 text-blue-600 border-blue-200' :
                         'bg-slate-50 text-slate-500 border-slate-200'
                       }`}>
-                      {(selectedSale as any).source} BILL
+                      {selectedSale.source} BILL
                     </span>
                   )}
                 </div>
@@ -330,10 +331,12 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(isEditing ? editItems : selectedSale.items).map(item => (
+                  {(isEditing ? editItems : selectedSale.items).map(item => {
+                    const pName = ('Product' in item && item.Product) ? item.Product.name : item.Batch?.Product?.name;
+                    return (
                     <TableRow key={item.id}>
-                      <TableCell className="font-bold text-slate-700">{(item as typeof editItems[0]).Product?.name || (item as typeof editItems[0]).Batch?.Product?.name}</TableCell>
-                      <TableCell className="font-mono text-xs text-slate-500">{(item as typeof editItems[0]).Batch?.batchNumber}</TableCell>
+                      <TableCell className="font-bold text-slate-700">{pName}</TableCell>
+                      <TableCell className="font-mono text-xs text-slate-500">{item.Batch?.batchNumber}</TableCell>
                       <TableCell className="text-center font-bold">
                         {isEditing ? (
                           <Input
@@ -357,7 +360,8 @@ export function HistoryClient({ allSales, products }: { allSales: SaleDetailed[]
                         </TableCell>
                       )}
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

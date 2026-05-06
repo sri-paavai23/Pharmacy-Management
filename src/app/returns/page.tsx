@@ -72,8 +72,7 @@ export default async function ReturnsPage() {
           <p className="text-slate-500 mt-1 pl-5">Process customer returns and manage stock reconciliation.</p>
         </div>
       </div>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <ReturnsClient salesReturns={salesReturns as any} allSales={allSales as any} />
+      <ReturnsClient salesReturns={salesReturns} allSales={allSales} />
     </div>
   );
 }

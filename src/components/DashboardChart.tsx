@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 
@@ -61,11 +60,10 @@ export const DashboardChart = memo(({ data, showProfit = true }: { data: ChartDa
           axisLine={false} 
           tickFormatter={(value) => `₹${value}`}
         />
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <Tooltip
           contentStyle={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0" }}
           itemStyle={{ fontSize: "14px", fontWeight: 500 }}
-          formatter={((value: any) => [`₹${Number(value).toFixed(2)}`, "Value"]) as any}
+          formatter={(value: unknown) => [`₹${Number(value || 0).toFixed(2)}`, "Value"]}
         />
         <Area
           type="monotone"

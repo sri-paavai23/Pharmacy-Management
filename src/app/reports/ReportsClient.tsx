@@ -52,8 +52,7 @@ export function ReportsClient({
   journalEntries: JournalEntryWithLines[];
   ledgers: LedgerWithGroup[];
   taxBySlab: Record<string, number>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  stockProducts?: any[];
+  stockProducts?: (product & { batches: batch[] })[];
 }) {
   const [activeTab, setActiveTab] = useState<"analytics" | "h1register" | "daybook" | "trialbalance" | "stock">("analytics");
   const router = useRouter();
@@ -469,10 +468,8 @@ export function ReportsClient({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                   {stockProducts.length > 0 ? stockProducts.flatMap((product: any) =>
-                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                     product.batches.map((batch: any) => {
+                   {stockProducts.length > 0 ? stockProducts.flatMap((product) =>
+                     product.batches.map((batch) => {
                        const expiry = new Date(batch.expiryDate);
                        const now = new Date();
                        const daysToExpiry = Math.floor((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

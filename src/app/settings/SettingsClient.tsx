@@ -137,8 +137,7 @@ export function SettingsClient({ initialVendors, initialDoctors, initialUsers, i
                   <div className="space-y-2"><Label>Staff Name</Label><Input required value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} /></div>
                   <div className="space-y-2">
                     <Label>Role</Label>
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    <Select value={userForm.role} onValueChange={(v: any) => setUserForm({...userForm, role: v})}>
+                    <Select value={userForm.role} onValueChange={(v) => setUserForm({...userForm, role: v || "CASHIER"})}>
 
                       <SelectTrigger className="h-12 border-slate-200"><SelectValue /></SelectTrigger>
                       <SelectContent>

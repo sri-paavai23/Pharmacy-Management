@@ -91,7 +91,7 @@ export function Header({
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-8 sticky top-0 z-10 shadow-sm print:hidden">
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
+        <DialogTrigger>
           <div className="flex items-center gap-3 cursor-pointer group hover:bg-slate-50 p-2 rounded-xl transition-all relative pr-8">
             <div className="bg-primary/10 p-2 rounded-lg text-primary group-hover:scale-110 transition-transform">
               <ShieldCheck className="w-5 h-5" />
@@ -181,8 +181,7 @@ export function Header({
           <CalendarDays className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
           <div className="flex flex-col justify-center">
              <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Accounting Period</span>
-             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-             <Select value={selectedFY} onValueChange={(v: any) => handleFYChange(v)}>
+             <Select value={selectedFY} onValueChange={(v) => handleFYChange(v || "")}>
                 <SelectTrigger className="border-none bg-transparent h-auto p-0 shadow-none focus:ring-0 text-sm font-black text-slate-800 min-w-[120px] hover:text-primary transition-colors flex items-center gap-1">
                   <SelectValue>
                     {financialYears.find(f => f.id === selectedFY)?.name ? `FY ${financialYears.find(f => f.id === selectedFY)?.name}` : "Select Period"}
