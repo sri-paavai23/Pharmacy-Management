@@ -2,6 +2,8 @@ import prisma from "@/lib/db";
 import { ReportsClient } from "./ReportsClient";
 import { cookies } from "next/headers";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReportsPage({ searchParams }: { searchParams: { period?: string, from?: string, to?: string } }) {
   const period = searchParams.period || "7days";
   const from = searchParams.from;
@@ -170,3 +172,4 @@ export default async function ReportsPage({ searchParams }: { searchParams: { pe
     />
   );
 }
+

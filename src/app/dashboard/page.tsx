@@ -4,6 +4,8 @@ import { Activity, IndianRupee, PackagePlus, Truck } from "lucide-react";
 import { DashboardChart } from "@/components/DashboardChart";
 import { ChartFilter } from "./ChartFilter";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage({ searchParams }: { searchParams: { range?: string, start?: string, end?: string } }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -234,3 +236,4 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     </div>
   );
 }
+

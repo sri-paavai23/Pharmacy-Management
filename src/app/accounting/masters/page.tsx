@@ -2,6 +2,8 @@ import prisma from "@/lib/db";
 import { MastersClient } from "./MastersClient";
 import { cookies } from "next/headers";
 
+export const dynamic = 'force-dynamic';
+
 export default async function MastersPage() {
   const fyId = cookies().get("activeFinancialYearId")?.value;
   

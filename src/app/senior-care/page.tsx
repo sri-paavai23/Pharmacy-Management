@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { SeniorCareClient } from "./SeniorCareClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SeniorCarePage() {
   // Use correct Prisma relation names (lowercase)
   const rawSubscriptions = await prisma.subscription.findMany({
@@ -50,3 +52,4 @@ export default async function SeniorCarePage() {
     </div>
   );
 }
+

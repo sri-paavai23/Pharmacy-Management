@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { CounterSaleClient } from "./CounterSaleClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CounterSalePage() {
   const rawProducts = await prisma.product.findMany({
     include: {
@@ -28,3 +30,4 @@ export default async function CounterSalePage() {
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { PurchasesClient } from "./PurchasesClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PurchasesPage() {
   const products = await prisma.product.findMany({
     orderBy: { name: 'asc' }
@@ -53,3 +55,4 @@ export default async function PurchasesPage() {
     </div>
   );
 }
+

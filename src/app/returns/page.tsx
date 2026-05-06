@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { ReturnsClient } from "./ReturnsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReturnsPage() {
   // Fetch with correct Prisma relation names (lowercase)
   const rawSalesReturns = await prisma.salesreturn.findMany({
@@ -76,3 +78,4 @@ export default async function ReturnsPage() {
     </div>
   );
 }
+

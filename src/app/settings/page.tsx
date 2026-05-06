@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { SettingsClient } from "./SettingsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   const vendors = await prisma.vendor.findMany({
     orderBy: { companyName: 'asc' }
@@ -33,3 +35,4 @@ export default async function SettingsPage() {
 
   );
 }
+

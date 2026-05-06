@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { CustomersClient } from "./CustomersClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CustomersPage() {
   const rawCustomers = await prisma.customer.findMany({
     include: {
@@ -47,3 +49,4 @@ export default async function CustomersPage() {
     </div>
   );
 }
+

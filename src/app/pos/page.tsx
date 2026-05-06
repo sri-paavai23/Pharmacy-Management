@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { PosClient } from "./PosClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PosPage() {
   const rawProducts = await prisma.product.findMany({
     include: {
@@ -31,3 +33,4 @@ export default async function PosPage() {
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { HistoryClient } from "./HistoryClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HistoryPage() {
   const rawAllSales = await prisma.sale.findMany({
     include: {
@@ -62,3 +64,4 @@ export default async function HistoryPage() {
     </div>
   );
 }
+
