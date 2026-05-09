@@ -51,17 +51,19 @@ export async function updateSale(data: UpdateSalePayload) {
     for (const je of journalEntries) {
       const lines = await tx.journalline.findMany({ where: { journalEntryId: je.id } });
       for (const line of lines) {
-        // Reverse ledger balances
+        // Reverse ledger balances — subtract what was previously added
         const netChange = line.credit - line.debit;
         if (netChange > 0) {
+          // Original entry credited this ledger — reverse by decrementing
           await tx.ledger.update({
             where: { id: line.ledgerId },
-            data: { currentBalance: { increment: netChange } }
+            data: { currentBalance: { decrement: netChange } }
           });
         } else if (netChange < 0) {
+          // Original entry debited this ledger — reverse by incrementing
           await tx.ledger.update({
             where: { id: line.ledgerId },
-            data: { currentBalance: { decrement: Math.abs(netChange) } }
+            data: { currentBalance: { increment: Math.abs(netChange) } }
           });
         }
       }

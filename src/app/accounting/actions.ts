@@ -78,6 +78,6 @@ export async function createVoucher(data: {
 
   });
 
-  revalidatePath('/counter-sale');
+  revalidatePath('/accounting/masters');
   revalidatePath('/reports');
 }

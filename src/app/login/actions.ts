@@ -13,7 +13,7 @@ export async function loginWithPin(pin: string) {
   }
 
   // Set auth cookie
-  cookies().set("auth_user", JSON.stringify({
+  ;(await cookies()).set("auth_user", JSON.stringify({
     id: user.id,
     name: user.name,
     role: user.role
@@ -26,5 +26,5 @@ export async function loginWithPin(pin: string) {
 }
 
 export async function logout() {
-  cookies().delete("auth_user");
+  ;(await cookies()).delete("auth_user");
 }

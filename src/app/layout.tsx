@@ -26,7 +26,7 @@ export default async function RootLayout({
     orderBy: { startDate: 'desc' }
   });
 
-  const authCookie = cookies().get("auth_user");
+  const authCookie = (await cookies()).get("auth_user");
   let user = null;
   if (authCookie?.value) {
     try {

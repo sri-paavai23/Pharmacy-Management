@@ -31,9 +31,10 @@ export async function updateBusinessSettings(data: {
   contactInfo: string;
   ownerDetails: string;
 }) {
-  await prisma.businesssettings.update({
+  await prisma.businesssettings.upsert({
     where: { id: "1" },
-    data: { ...data, updatedAt: new Date() }
+    update: { ...data, updatedAt: new Date() },
+    create: { ...data, id: "1", updatedAt: new Date() }
   });
   revalidatePath("/");
 }

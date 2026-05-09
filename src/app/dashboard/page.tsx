@@ -6,7 +6,9 @@ import { ChartFilter } from "./ChartFilter";
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage({ searchParams }: { searchParams: { range?: string, start?: string, end?: string } }) {
+export default async function DashboardPage(props: { searchParams: Promise<{ range?: string, start?: string, end?: string }> }) {
+  const searchParams = await props.searchParams;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -227,7 +229,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
             </div>
           </CardHeader>
           <CardContent className="p-10 bg-white">
-            <div className="h-[400px]">
+            <div className="h-[400px] min-h-[400px] w-full">
               <DashboardChart data={chartData} showProfit={true} />
             </div>
           </CardContent>

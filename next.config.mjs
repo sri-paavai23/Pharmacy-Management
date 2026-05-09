@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    experimental: {
-        serverComponentsExternalPackages: ['onnxruntime-node', '@huggingface/transformers', '@xenova/transformers'],
-    },
+    serverExternalPackages: ['onnxruntime-node', '@huggingface/transformers', '@xenova/transformers'],
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {

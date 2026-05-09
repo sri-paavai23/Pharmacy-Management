@@ -4,11 +4,13 @@ import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
-export default async function ReportsPage({ searchParams }: { searchParams: { period?: string, from?: string, to?: string } }) {
+export default async function ReportsPage(props: { searchParams: Promise<{ period?: string, from?: string, to?: string }> }) {
+  const searchParams = await props.searchParams;
   const period = searchParams.period || "7days";
   const from = searchParams.from;
   const to = searchParams.to;
-  const fyId = cookies().get("activeFinancialYearId")?.value;
+  const cookieStore = await cookies();
+  const fyId = cookieStore.get("activeFinancialYearId")?.value;
 
   const activeFY = await prisma.financialyear.findFirst({
     where: fyId ? { id: fyId } : { isActive: true }

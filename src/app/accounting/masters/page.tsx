@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 export const dynamic = 'force-dynamic';
 
 export default async function MastersPage() {
-  const fyId = cookies().get("activeFinancialYearId")?.value;
+  const fyId = (await cookies()).get("activeFinancialYearId")?.value;
   
   const groups = await prisma.accountgroup.findMany({
     orderBy: { name: 'asc' }

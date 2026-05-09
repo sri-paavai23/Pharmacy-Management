@@ -28,7 +28,7 @@ export default async function ReturnsPage() {
     ...r,
     Sale: {
       ...r.sale,
-      Customer: r.sale.customer,
+      Customer: r.sale.customer ?? null,
       items: r.sale.saleitem.map(si => ({
         ...si,
         Batch: {
