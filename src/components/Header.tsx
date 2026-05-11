@@ -10,21 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { updateBusinessSettings } from "@/app/settings/business-actions";
-import { useSettings } from "./SettingsProvider";
+import { useSettings, BusinessSettings } from "./SettingsProvider";
 import { Edit2 } from "lucide-react";
 
-interface FinancialYear {
+export interface FinancialYear {
   id: string;
   name: string;
   isActive: boolean;
-}
-
-interface BusinessSettings {
-  pharmacyName: string;
-  dlNumber: string;
-  gstin: string;
-  contactInfo: string;
-  ownerDetails: string;
 }
 
 export function Header({ 
@@ -42,10 +34,6 @@ export function Header({
   const [localSettings, setLocalSettings] = useState(initialSettings);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
 
   useEffect(() => {
     setLocalSettings(initialSettings);
@@ -203,13 +191,6 @@ export function Header({
                 <span className="text-sm font-black text-slate-800">{user.name}</span>
                 <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{user.role}</span>
              </div>
-             <button 
-               onClick={handleLogout}
-               className="p-3 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100"
-               title="Log Out"
-             >
-                <LogOut className="w-4 h-4" />
-             </button>
           </div>
         )}
       </div>

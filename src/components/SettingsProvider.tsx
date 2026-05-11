@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-interface BusinessSettings {
+export interface BusinessSettings {
   pharmacyName: string;
   dlNumber: string;
   gstin: string;
