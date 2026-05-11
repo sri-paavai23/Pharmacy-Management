@@ -14,8 +14,6 @@ export const metadata: Metadata = {
   description: "Pharmacy Management System",
 };
 
-import { cookies } from "next/headers";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -26,16 +24,8 @@ export default async function RootLayout({
     orderBy: { startDate: 'desc' }
   });
 
-  const authCookie = (await cookies()).get("auth_user");
-  let user = null;
-  if (authCookie?.value) {
-    try {
-      user = JSON.parse(authCookie.value);
-    } catch (e) {
-      console.error("Failed to parse auth_user cookie", e);
-      user = null;
-    }
-  }
+  // Auth system removed — always use default admin user
+  const user = { name: "Admin", role: "ADMIN" };
 
   const settings = await prisma.businesssettings.findUnique({ where: { id: "1" } });
 
@@ -50,21 +40,19 @@ export default async function RootLayout({
             ownerDetails: ""
           }}>
             <div className="flex h-screen overflow-hidden bg-slate-50">
-              {user && <Sidebar />}
+              <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                {user && (
-                  <Header 
-                    financialYears={financialYears} 
-                    user={user} 
-                    initialSettings={settings || {
-                      pharmacyName: "Vellammal Pharmacy",
-                      dlNumber: "",
-                      gstin: "",
-                      contactInfo: "",
-                      ownerDetails: ""
-                    }} 
-                  />
-                )}
+                <Header 
+                  financialYears={financialYears} 
+                  user={user} 
+                  initialSettings={settings || {
+                    pharmacyName: "Vellammal Pharmacy",
+                    dlNumber: "",
+                    gstin: "",
+                    contactInfo: "",
+                    ownerDetails: ""
+                  }} 
+                />
                 <main className="flex-1 overflow-y-auto">
                   {children}
                 </main>

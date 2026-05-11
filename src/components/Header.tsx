@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, ShieldCheck, LogOut, Building2 } from "lucide-react";
-
-import { logout } from "@/app/login/actions";
+import { CalendarDays, ShieldCheck, Building2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
