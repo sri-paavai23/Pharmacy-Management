@@ -23,12 +23,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ ran
     _sum: { refundAmount: true },
   });
 
-  const h1SalesCount = await prisma.sale.count({
-    where: {
-      createdAt: { gte: today },
-      saleitem: { some: { batch: { product: { scheduleH1: true } } } }
-    }
-  });
+
 
   const revenue = todaysSales._sum.totalAmount || 0;
   const refunds = todaysRefunds._sum.refundAmount || 0;
@@ -149,7 +144,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ ran
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 
         {/* Net Revenue */}
         <Card className="shadow-xl border-0 overflow-hidden group hover:shadow-2xl transition-all">
@@ -166,17 +161,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ ran
           </CardContent>
         </Card>
 
-        {/* H1 Compliance */}
-        <Card className="shadow-xl border-0 overflow-hidden group hover:shadow-2xl transition-all border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 bg-red-50/50">
-            <CardTitle className="text-xs font-black uppercase text-red-600 tracking-widest">H1 Sales Today</CardTitle>
-            <Activity className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-3xl font-black text-slate-800">{h1SalesCount} Sales</div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase mt-2 italic">Strict Doctor Registry Linkage Active</p>
-          </CardContent>
-        </Card>
+
 
         {/* Low Stock Alerts */}
         <Card className="shadow-xl border-0 overflow-hidden group hover:shadow-2xl transition-all border-l-4 border-l-amber-500">

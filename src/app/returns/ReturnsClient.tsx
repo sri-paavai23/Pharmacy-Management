@@ -35,11 +35,28 @@ export function ReturnsClient({ salesReturns, allSales }: {
   const [reason, setReason] = useState("");
   const [refundAmount, setRefundAmount] = useState(0);
 
+  // Compute how much has already been refunded for the selected sale
+  const alreadyRefunded = selectedSale
+    ? salesReturns
+        .filter(r => r.Sale.id === selectedSale.id)
+        .reduce((sum, r) => sum + r.refundAmount, 0)
+    : 0;
+  const maxRefund = selectedSale ? Math.max(0, selectedSale.totalAmount - alreadyRefunded) : 0;
+
   const handleSearch = () => {
     const found = allSales.find(s => s.invoiceNumber.toLowerCase() === searchInvoice.toLowerCase());
     if (found) {
       setSelectedSale(found);
-      setRefundAmount(found.totalAmount);
+      // Compute already-refunded for this sale and set default to remaining balance
+      const refunded = salesReturns
+        .filter(r => r.Sale.id === found.id)
+        .reduce((sum, r) => sum + r.refundAmount, 0);
+      const remaining = Math.max(0, found.totalAmount - refunded);
+      if (remaining <= 0) {
+        alert(`Invoice ${found.invoiceNumber} has already been fully refunded.`);
+        return;
+      }
+      setRefundAmount(remaining);
     } else {
       alert("Invoice not found!");
     }
@@ -48,6 +65,14 @@ export function ReturnsClient({ salesReturns, allSales }: {
   const handleProcessReturn = async () => {
     if (!selectedSale || !reason) {
       alert("Please select a sale and provide a reason");
+      return;
+    }
+    if (refundAmount <= 0) {
+      alert("Refund amount must be greater than zero.");
+      return;
+    }
+    if (refundAmount > maxRefund + 0.01) {
+      alert(`Refund amount cannot exceed the remaining balance of ₹${maxRefund.toFixed(2)}.`);
       return;
     }
     setLoading(true);
@@ -185,9 +210,16 @@ export function ReturnsClient({ salesReturns, allSales }: {
                          <Input 
                             type="number"
                             value={refundAmount}
-                            onChange={e => setRefundAmount(parseFloat(e.target.value))}
+                            min={0.01}
+                            max={maxRefund}
+                            onChange={e => setRefundAmount(Math.min(maxRefund, Math.max(0, parseFloat(e.target.value) || 0)))}
                             className="h-14 text-3xl font-black text-orange-600 rounded-2xl border-orange-100 bg-orange-50/20"
                          />
+                         <div className="flex justify-between text-[10px] font-bold pl-1">
+                           <span className="text-slate-400">ORIGINAL: ₹{selectedSale.totalAmount.toFixed(2)}</span>
+                           {alreadyRefunded > 0 && <span className="text-amber-500">PREV REFUND: -₹{alreadyRefunded.toFixed(2)}</span>}
+                           <span className={refundAmount > maxRefund ? "text-red-500" : "text-emerald-600"}>MAX: ₹{maxRefund.toFixed(2)}</span>
+                         </div>
                       </div>
                       <div className="space-y-2">
                          <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Reason for Return</Label>

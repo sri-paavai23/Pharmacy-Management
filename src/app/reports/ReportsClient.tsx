@@ -34,6 +34,8 @@ export function ReportsClient({
   totalRevenue,
   totalProfit,
   totalTax,
+  grossRevenue = 0,
+  totalRefunds = 0,
   chartData,
   profitByItem,
   h1Sales,
@@ -46,6 +48,8 @@ export function ReportsClient({
   totalRevenue: number;
   totalProfit: number;
   totalTax: number;
+  grossRevenue?: number;
+  totalRefunds?: number;
   chartData: MappedChartData[];
   profitByItem: ItemProfit[];
   h1Sales: SaleWithCompliance[];
@@ -78,7 +82,8 @@ export function ReportsClient({
     if (activeTab === "analytics") {
       csvData += "Product Name,Qty Sold,Total Revenue,Gross Profit,Margin %\n";
       profitByItem.forEach(item => {
-        csvData += `"${item.name}",${item.qtySold},${item.revenue},${item.profit},${((item.profit/item.revenue)*100).toFixed(1)}%\n`;
+        const margin = item.revenue > 0 ? ((item.profit/item.revenue)*100).toFixed(1) : '0.0';
+        csvData += `"${item.name}",${item.qtySold},${item.revenue},${item.profit},${margin}%\n`;
       });
     } else if (activeTab === "h1register") {
       csvData += "Date,Invoice,Patient,Doctor,Items\n";
@@ -183,12 +188,15 @@ export function ReportsClient({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <Card className="shadow-2xl border-0 overflow-hidden group">
               <CardHeader className="flex flex-row items-center justify-between pb-2 bg-blue-50/50">
-                <CardTitle className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Revenue</CardTitle>
+                <CardTitle className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Net Revenue</CardTitle>
                 <IndianRupee className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="text-3xl font-black text-slate-800">₹{totalRevenue.toFixed(2)}</div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Total Period Turnover</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[10px] font-bold text-slate-400">GROSS: ₹{grossRevenue.toFixed(2)}</span>
+                  {totalRefunds > 0 && <span className="text-[10px] font-bold text-red-500">RETURNS: -₹{totalRefunds.toFixed(2)}</span>}
+                </div>
               </CardContent>
             </Card>
             <Card className="shadow-2xl border-0 overflow-hidden group">
@@ -231,9 +239,19 @@ export function ReportsClient({
                 <Badge className="bg-white/10 text-white border-0 font-bold px-4 py-1.5 uppercase text-[9px] tracking-widest">Live Period Updates</Badge>
              </CardHeader>
              <CardContent className="p-10 bg-white">
-                <div className="h-[400px]">
-                   <DashboardChart data={chartData} />
-                </div>
+                {chartData.length > 0 ? (
+                  <div className="h-[400px]">
+                     <DashboardChart data={chartData} />
+                  </div>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center">
+                    <div className="text-center space-y-2">
+                      <Activity className="w-12 h-12 text-slate-200 mx-auto" />
+                      <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No sales data for this period</p>
+                      <p className="text-slate-300 text-xs">Try adjusting the date range above</p>
+                    </div>
+                  </div>
+                )}
              </CardContent>
           </Card>
 
@@ -258,12 +276,12 @@ export function ReportsClient({
                       <TableCell className="pl-8 font-black text-slate-800 text-lg group-hover:text-primary transition-colors">{item.name}</TableCell>
                       <TableCell className="text-right"><Badge variant="outline" className="font-black text-slate-500 px-3">{item.qtySold}</Badge></TableCell>
                       <TableCell className="text-right font-bold text-slate-600">₹{item.revenue.toFixed(2)}</TableCell>
-                      <TableCell className="text-right font-black text-emerald-600 text-lg">₹{item.profit.toFixed(2)}</TableCell>
+                      <TableCell className={cn("text-right font-black text-lg", item.profit >= 0 ? "text-emerald-600" : "text-red-600")}>₹{item.profit.toFixed(2)}</TableCell>
                       <TableCell className="text-right pr-8">
                         <div className="flex flex-col items-end">
-                           <span className="text-xs font-black text-slate-800">{((item.profit / item.revenue) * 100).toFixed(1)}%</span>
+                           <span className="text-xs font-black text-slate-800">{item.revenue > 0 ? ((item.profit / item.revenue) * 100).toFixed(1) : '0.0'}%</span>
                            <div className="w-16 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
-                              <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, (item.profit / item.revenue) * 100)}%` }} />
+                              <div className={cn("h-full rounded-full", item.profit >= 0 ? "bg-emerald-500" : "bg-red-500")} style={{ width: `${Math.max(0, Math.min(100, item.revenue > 0 ? Math.abs(item.profit / item.revenue) * 100 : 0))}%` }} />
                            </div>
                         </div>
                       </TableCell>

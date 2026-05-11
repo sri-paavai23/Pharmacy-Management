@@ -12,7 +12,11 @@ export async function addVendor(data: { companyName: string; contactPerson: stri
 }
 
 export async function deleteVendor(id: string) {
-  await prisma.vendor.delete({ where: { id } });
+  try {
+    await prisma.vendor.delete({ where: { id } });
+  } catch {
+    throw new Error("Cannot delete this vendor — they have linked purchase records. Remove their purchases first.");
+  }
   revalidatePath('/settings');
 }
 
@@ -24,7 +28,11 @@ export async function addDoctor(data: { name: string; registrationNumber: string
 }
 
 export async function deleteDoctor(id: string) {
-  await prisma.doctor.delete({ where: { id } });
+  try {
+    await prisma.doctor.delete({ where: { id } });
+  } catch {
+    throw new Error("Cannot delete this doctor — they are linked to existing sales records.");
+  }
   revalidatePath('/settings');
 }
 

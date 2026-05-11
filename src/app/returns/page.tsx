@@ -39,6 +39,7 @@ export default async function ReturnsPage() {
     }
   }));
 
+  // Limit to 500 most recent sales to prevent loading the entire table into memory
   const rawAllSales = await prisma.sale.findMany({
     include: {
       customer: true,
@@ -48,10 +49,11 @@ export default async function ReturnsPage() {
         }
       }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    take: 500
   });
 
-  // Remap for the client 
+  // Remap for the client
   const allSales = rawAllSales.map(s => ({
     ...s,
     Customer: s.customer,
@@ -69,7 +71,7 @@ export default async function ReturnsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 border-l-4 border-orange-500 pl-4 rounded-sm">
-            Returns & Refunds
+            Returns &amp; Refunds
           </h1>
           <p className="text-slate-500 mt-1 pl-5">Process customer returns and manage stock reconciliation.</p>
         </div>
@@ -78,4 +80,3 @@ export default async function ReturnsPage() {
     </div>
   );
 }
-

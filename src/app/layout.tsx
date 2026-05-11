@@ -39,19 +39,9 @@ export default async function RootLayout({
 
   const settings = await prisma.businesssettings.findUnique({ where: { id: "1" } });
 
-  // System Integrity & License Check
-  const { checkSystemIntegrity, getDeviceId } = await import("@/lib/security/license");
-  const { LicenseCheckUI } = await import("@/components/LicenseCheckUI");
-  
-  const integrity = await checkSystemIntegrity();
-  const deviceId = await getDeviceId();
-
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
       <body className="antialiased">
-        {!integrity.valid ? (
-          <LicenseCheckUI reason={integrity.reason || 'UNKNOWN'} deviceId={deviceId} />
-        ) : (
           <SettingsProvider initialSettings={settings || {
             pharmacyName: "Vellammal Pharmacy",
             dlNumber: "",
@@ -81,7 +71,6 @@ export default async function RootLayout({
               </div>
             </div>
           </SettingsProvider>
-        )}
       </body>
     </html>
   );
