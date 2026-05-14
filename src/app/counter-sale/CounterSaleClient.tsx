@@ -73,7 +73,7 @@ export function CounterSaleClient({ products }: { products: ProductWithBatches[]
   const actualGrandTotal = manualGrandTotal === "" ? autoTotal : manualGrandTotal;
   const roundOff = actualGrandTotal - autoTotal;
 
-  const handleCompleteSale = useCallback(async () => {
+  const handleCompleteSale = useCallback(async (shouldPrint: boolean = true) => {
     if (cart.length === 0) return;
 
     const getActiveFYFromCookie = () => {
@@ -121,7 +121,7 @@ export function CounterSaleClient({ products }: { products: ProductWithBatches[]
       };
 
       await processSale(payload);
-      window.print();
+      if (shouldPrint) window.print();
       setCart([]);
       setDiscount(0);
       setSearchTerm("");
@@ -229,9 +229,13 @@ export function CounterSaleClient({ products }: { products: ProductWithBatches[]
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F12") {
+      if (e.altKey && e.key.toLowerCase() === 'p') {
         e.preventDefault();
-        handleCompleteSale();
+        handleCompleteSale(true);
+      }
+      if (e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleCompleteSale(false);
       }
       if (e.key === "m" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
@@ -561,13 +565,23 @@ export function CounterSaleClient({ products }: { products: ProductWithBatches[]
               <span className="text-4xl font-extrabold text-white tracking-tighter">₹{actualGrandTotal.toFixed(2)}</span>
             </div>
 
-            <Button
-              className="w-full h-16 text-xl font-black rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all print:hidden"
-              onClick={handleCompleteSale}
-              disabled={loading || cart.length === 0}
-            >
-              {loading ? "Processing..." : "Complete Counter Sale (F12)"}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                className="flex-1 h-16 text-lg font-bold rounded-xl border-2 border-white/20 text-white hover:bg-white/10 transition-all print:hidden"
+                onClick={() => handleCompleteSale(false)}
+                disabled={loading || cart.length === 0}
+              >
+                {loading ? "..." : "Save"}
+              </Button>
+              <Button 
+                className="flex-[2] h-16 text-xl font-black rounded-2xl shadow-2xl hover:shadow-primary/30 transition-all print:hidden"
+                onClick={() => handleCompleteSale(true)}
+                disabled={loading || cart.length === 0}
+              >
+                {loading ? "Processing..." : "Print"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

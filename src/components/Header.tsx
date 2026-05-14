@@ -35,6 +35,13 @@ export function Header({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     setLocalSettings(initialSettings);
 
@@ -117,21 +124,29 @@ export function Header({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">DL Number</Label>
+                  <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">DL Number 1</Label>
                   <Input 
                   value={localSettings.dlNumber} 
                   onChange={e => setLocalSettings({...localSettings, dlNumber: e.target.value})} 
                   className="h-12 border-slate-200 rounded-xl font-mono text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">GSTIN</Label>
-                <Input 
-                  value={localSettings.gstin} 
-                  onChange={e => setLocalSettings({...localSettings, gstin: e.target.value})} 
-                  className="h-12 border-slate-200 rounded-xl font-mono text-sm uppercase"
+                <div className="space-y-2">
+                  <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">DL Number 2</Label>
+                  <Input 
+                  value={localSettings.dlNumber2} 
+                  onChange={e => setLocalSettings({...localSettings, dlNumber2: e.target.value})} 
+                  className="h-12 border-slate-200 rounded-xl font-mono text-sm"
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">GSTIN</Label>
+              <Input 
+                value={localSettings.gstin} 
+                onChange={e => setLocalSettings({...localSettings, gstin: e.target.value})} 
+                className="h-12 border-slate-200 rounded-xl font-mono text-sm uppercase"
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">Contact Information</Label>
@@ -160,7 +175,12 @@ export function Header({
       <div className="flex items-center gap-6">
         <div className="hidden md:flex flex-col text-right">
            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Current Session</span>
-           <span className="text-xs font-black text-slate-600">{new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+           <span className="text-xs font-black text-slate-600">
+             {currentTime.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+             <span className="ml-2 text-primary">
+               {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+             </span>
+           </span>
         </div>
 
         <div className="flex items-center gap-3 px-5 py-2 bg-slate-100/50 border border-slate-200 rounded-full hover:bg-white transition-all group shadow-inner h-12">

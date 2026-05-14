@@ -49,6 +49,7 @@ export async function processPurchaseInvoice(data: {
     name?: string;
     manufacturer?: string;
     category?: string;
+    form?: string;
     hsnCode?: string;
     taxRate?: number;
     isPrescriptionRequired?: boolean;
@@ -224,6 +225,7 @@ export async function processPurchaseInvoice(data: {
             name:                  item.name.trim(),
             manufacturer:          item.manufacturer?.trim()  || 'Unknown',
             category:              item.category?.trim()      || 'General',
+            form:                  item.form?.trim()          || 'TABLET',
             hsnCode:               item.hsnCode?.trim()       || '30049099', // Default pharma HSN
             taxRate:               item.taxRate               ?? 12,
             isPrescriptionRequired: item.isPrescriptionRequired || false,
@@ -254,10 +256,14 @@ export async function processPurchaseInvoice(data: {
             `Please select a valid product from the dropdown, or switch to "NEW DRUG" mode.`
           );
         }
-        // Update packSize if changed
+        // Update packSize and form if changed
         await tx.product.update({
           where: { id: productId },
-          data: { packSize: item.packSize || existingProd.packSize }
+          data: { 
+            packSize: item.packSize || existingProd.packSize,
+            form: item.form || existingProd.form,
+            hsnCode: item.hsnCode || existingProd.hsnCode
+          }
         });
       }
 

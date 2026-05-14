@@ -38,6 +38,7 @@ model businesssettings {
   id           String   @id @default("1")
   pharmacyName String
   dlNumber     String
+  dlNumber2    String   @default("")
   gstin        String
   contactInfo  String
   ownerDetails String
@@ -132,6 +133,7 @@ model product {
   name                   String
   manufacturer           String
   category               String
+  form                   String                      @default("TABLET")
   hsnCode                String
   taxRate                Float                       @default(12)
   isPrescriptionRequired Boolean                     @default(false)

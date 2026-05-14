@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 export interface BusinessSettings {
   pharmacyName: string;
   dlNumber: string;
+  dlNumber2: string;
   gstin: string;
   contactInfo: string;
   ownerDetails: string;

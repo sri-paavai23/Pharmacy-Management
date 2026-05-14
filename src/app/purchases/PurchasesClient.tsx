@@ -23,6 +23,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
   const [activeTab, setActiveTab] = useState<"list" | "new">("list");
   const [loading, setLoading] = useState(false);
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+  const [vendorSearchText, setVendorSearchText] = useState("");
 
   const [invoiceMetadata, setInvoiceMetadata] = useState({
     vendorId: "",
@@ -38,6 +39,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
     name: "",
     manufacturer: "Generic",
     category: "General",
+    form: "TABLET",
     hsnCode: "30049099",
     taxRate: 12,
     isPrescriptionRequired: false,
@@ -68,6 +70,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
       name: item.Batch.Product.name,
       manufacturer: item.Batch.Product.manufacturer,
       category: item.Batch.Product.category,
+      form: item.Batch.Product.form || "TABLET",
       hsnCode: item.Batch.Product.hsnCode,
       taxRate: item.Batch.Product.taxRate,
       isPrescriptionRequired: item.Batch.Product.isPrescriptionRequired,
@@ -82,6 +85,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
       locationRack: item.Batch.locationRack || "",
       discount: 0
     })));
+    setVendorSearchText(p.Vendor.companyName);
     setActiveTab("new");
   };
 
@@ -137,6 +141,27 @@ export function PurchasesClient({ products, vendors, purchases }: {
   // shared select style
   const sel = "h-8 w-full border border-slate-200 bg-white px-1.5 text-[11px] font-semibold uppercase rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer";
   const inp = "h-8 border-slate-200 bg-white text-[11px] rounded-lg shadow-sm px-2 focus:ring-2 focus:ring-primary/20";
+
+  const handleKeyDown = (e: React.KeyboardEvent, idx: number, field: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const row = e.currentTarget.closest('tr');
+      if (row) {
+        const inputs = Array.from(row.querySelectorAll('input, select')) as HTMLElement[];
+        const currentIndex = inputs.indexOf(e.currentTarget as HTMLElement);
+        if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+          inputs[currentIndex + 1].focus();
+        } else if (idx < invoiceItems.length - 1) {
+          // Move to first input of next row
+          const nextRow = row.nextElementSibling;
+          if (nextRow) {
+            const nextInputs = Array.from(nextRow.querySelectorAll('input, select')) as HTMLElement[];
+            if (nextInputs.length > 0) nextInputs[0].focus();
+          }
+        }
+      }
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -196,8 +221,12 @@ export function PurchasesClient({ products, vendors, purchases }: {
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Vendor</Label>
               <div className="relative">
                 <Input list="vendor-list" className={cn(inp, "h-9 font-semibold")} placeholder="Search vendor..."
-                  value={vendors.find(v => v.id === invoiceMetadata.vendorId)?.companyName || ''}
-                  onChange={e => { const v = vendors.find(x => x.companyName === e.target.value); if (v) setInvoiceMetadata(p => ({ ...p, vendorId: v.id })); }}
+                  value={vendorSearchText}
+                  onChange={e => { 
+                    setVendorSearchText(e.target.value);
+                    const v = vendors.find(x => x.companyName === e.target.value); 
+                    if (v) setInvoiceMetadata(p => ({ ...p, vendorId: v.id })); 
+                  }}
                 />
                 <datalist id="vendor-list">{vendors.map(v => <option key={v.id} value={v.companyName}>{v.gstin}</option>)}</datalist>
               </div>
@@ -229,11 +258,11 @@ export function PurchasesClient({ products, vendors, purchases }: {
             </div>
 
             <div className="border border-slate-100 rounded-xl overflow-x-auto">
-              <Table className="min-w-[1200px]">
+              <Table className="min-w-[1600px]">
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-b border-slate-100">
-                    {["#","Type","Product / Drug Name","Pack","Sch.","Batch#","Expiry","Qty","Rate ₹","Sell ₹","MRP ₹","GST%","Disc%","Total",""].map((h, i) => (
-                      <TableHead key={i} className={cn("py-2 text-[9px] font-black uppercase tracking-widest text-slate-400", i >= 7 && i <= 13 ? "text-right" : "text-center")}>
+                    {["#","Type","Product / Drug Name","Pack","Sch.","FORM","HSN","Batch#","Expiry","Qty","Rate ₹","MRP ₹","GST%","Disc%","Total",""].map((h, i) => (
+                      <TableHead key={i} className={cn("py-2 text-[9px] font-black uppercase tracking-widest text-slate-400", i >= 9 && i <= 14 ? "text-right" : "text-center")}>
                         {h}
                       </TableHead>
                     ))}
@@ -247,8 +276,10 @@ export function PurchasesClient({ products, vendors, purchases }: {
                       <TableCell className="text-center text-[10px] font-bold text-slate-400 w-8">{idx + 1}</TableCell>
 
                       {/* Type */}
-                      <TableCell className="w-24">
-                        <select value={item.isExistingProduct} onChange={e => {
+                      <TableCell className="w-28">
+                        <select value={item.isExistingProduct} 
+                          onKeyDown={e => handleKeyDown(e, idx, 'type')}
+                          onChange={e => {
                           const v = e.target.value; const next = [...invoiceItems];
                           next[idx].isExistingProduct = v;
                           if (v === 'no') { next[idx].productId = ""; next[idx].name = ""; }
@@ -260,32 +291,44 @@ export function PurchasesClient({ products, vendors, purchases }: {
                       </TableCell>
 
                       {/* Product */}
-                      <TableCell className="min-w-[160px]">
+                      <TableCell className="min-w-[250px]">
                         <datalist id={`pl-${idx}`}>{products.map(p => <option key={p.id} value={p.name}>{p.manufacturer}</option>)}</datalist>
                         {item.isExistingProduct === 'yes' ? (
                           <Input list={`pl-${idx}`} placeholder="Search…" className={cn(inp, "font-semibold")}
                             value={item.name}
+                            onKeyDown={e => handleKeyDown(e, idx, 'name')}
                             onChange={e => {
                               const prod = products.find(p => p.name === e.target.value);
                               const next = [...invoiceItems]; next[idx].name = e.target.value;
-                              if (prod) { next[idx].productId = prod.id; next[idx].manufacturer = prod.manufacturer; next[idx].taxRate = prod.taxRate; next[idx].packSize = prod.packSize; }
+                              if (prod) { 
+                                next[idx].productId = prod.id; 
+                                next[idx].manufacturer = prod.manufacturer; 
+                                next[idx].taxRate = prod.taxRate; 
+                                next[idx].packSize = prod.packSize;
+                                next[idx].form = prod.form || "TABLET";
+                                next[idx].hsnCode = prod.hsnCode;
+                              }
                               setInvoiceItems(next);
                             }} />
                         ) : (
                           <Input placeholder="New drug name…" className={cn(inp, "font-semibold text-emerald-700 border-emerald-200 bg-emerald-50/40")}
-                            value={item.name} onChange={e => { const next = [...invoiceItems]; next[idx].name = e.target.value; setInvoiceItems(next); }} />
+                            value={item.name} 
+                            onKeyDown={e => handleKeyDown(e, idx, 'name')}
+                            onChange={e => { const next = [...invoiceItems]; next[idx].name = e.target.value; setInvoiceItems(next); }} />
                         )}
                       </TableCell>
 
                       {/* Pack */}
                       <TableCell className="w-20">
                         <Input type="number" className={cn(inp, "text-center font-bold")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'pack')}
                           value={item.packSize || ''} onChange={e => { const next = [...invoiceItems]; next[idx].packSize = parseInt(e.target.value) || 1; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Schedule */}
-                      <TableCell className="w-20">
+                      <TableCell className="w-24">
                         <select value={item.scheduleH1 ? 'H1' : (item.isPrescriptionRequired ? 'H' : (item.category === 'NRX' ? 'NRX' : 'NONE'))}
+                          onKeyDown={e => handleKeyDown(e, idx, 'sch')}
                           onChange={e => {
                             const v = e.target.value; const next = [...invoiceItems];
                             next[idx].scheduleH1 = v === 'H1';
@@ -300,56 +343,77 @@ export function PurchasesClient({ products, vendors, purchases }: {
                         </select>
                       </TableCell>
 
+                      {/* FORM */}
+                      <TableCell className="w-28">
+                        <select value={item.form} 
+                          onKeyDown={e => handleKeyDown(e, idx, 'form')}
+                          onChange={e => { const next = [...invoiceItems]; next[idx].form = e.target.value; setInvoiceItems(next); }} className={sel}>
+                          <option value="TABLET">Tablet</option>
+                          <option value="SYRUP">Syrup</option>
+                          <option value="INJECTION">Injection</option>
+                          <option value="COSMETICS">Cosmetics</option>
+                        </select>
+                      </TableCell>
+
+                      {/* HSN */}
+                      <TableCell className="w-28">
+                        <Input placeholder="HSN" className={cn(inp, "text-center font-mono")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'hsn')}
+                          value={item.hsnCode} onChange={e => { const next = [...invoiceItems]; next[idx].hsnCode = e.target.value; setInvoiceItems(next); }} />
+                      </TableCell>
+
                       {/* Batch# */}
-                      <TableCell className="w-24">
+                      <TableCell className="w-28">
                         <Input placeholder="Batch" className={cn(inp, "font-mono text-center")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'batch')}
                           value={item.batchNumber} onChange={e => { const next = [...invoiceItems]; next[idx].batchNumber = e.target.value; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Expiry */}
                       <TableCell className="w-32">
                         <Input type="date" className={inp}
+                          onKeyDown={e => handleKeyDown(e, idx, 'expiry')}
                           value={item.expiryDate} onChange={e => { const next = [...invoiceItems]; next[idx].expiryDate = e.target.value; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Qty */}
                       <TableCell className="w-20">
                         <Input type="number" className={cn(inp, "text-center font-black text-primary")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'qty')}
                           value={item.currentStock || ''} onChange={e => { const next = [...invoiceItems]; next[idx].currentStock = parseInt(e.target.value) || 0; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Rate */}
-                      <TableCell className="w-20">
+                      <TableCell className="w-24">
                         <Input type="number" step="0.01" className={cn(inp, "text-right font-semibold")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'rate')}
                           value={item.purchasePrice || ''} onChange={e => { const next = [...invoiceItems]; next[idx].purchasePrice = parseFloat(e.target.value) || 0; setInvoiceItems(next); }} />
                       </TableCell>
 
-                      {/* Selling */}
-                      <TableCell className="w-20">
-                        <Input type="number" step="0.01" className={cn(inp, "text-right font-semibold text-primary")}
-                          value={item.sellingPrice || ''} onChange={e => { const next = [...invoiceItems]; next[idx].sellingPrice = parseFloat(e.target.value) || 0; setInvoiceItems(next); }} />
-                      </TableCell>
 
                       {/* MRP */}
-                      <TableCell className="w-20">
+                      <TableCell className="w-24">
                         <Input type="number" step="0.01" className={cn(inp, "text-right font-semibold text-slate-500")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'mrp')}
                           value={item.mrp || ''} onChange={e => { const next = [...invoiceItems]; next[idx].mrp = parseFloat(e.target.value) || 0; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* GST% */}
                       <TableCell className="w-20">
                         <Input type="number" className={cn(inp, "text-right font-semibold text-teal-600")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'gst')}
                           value={item.taxRate ?? 12} onChange={e => { const next = [...invoiceItems]; next[idx].taxRate = parseFloat(e.target.value) || 0; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Disc% */}
                       <TableCell className="w-20">
                         <Input type="number" placeholder="0" className={cn(inp, "text-right font-semibold text-blue-600")}
+                          onKeyDown={e => handleKeyDown(e, idx, 'disc')}
                           value={item.discount || ''} onChange={e => { const next = [...invoiceItems]; next[idx].discount = parseFloat(e.target.value) || 0; setInvoiceItems(next); }} />
                       </TableCell>
 
                       {/* Total */}
-                      <TableCell className="text-right font-black text-slate-800 text-xs w-20">
+                      <TableCell className="text-right font-black text-slate-800 text-xs w-24">
                         ₹{(((item.purchasePrice * Math.max(1, Math.round((item.currentStock || 0) / Math.max(1, item.packSize || 1)))) * (1 - (item.discount || 0) / 100)) * (1 + (item.taxRate || 0) / 100)).toFixed(2)}
                       </TableCell>
 

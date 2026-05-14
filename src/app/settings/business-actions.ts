@@ -27,6 +27,7 @@ export async function getBusinessSettings() {
 export async function updateBusinessSettings(data: {
   pharmacyName: string;
   dlNumber: string;
+  dlNumber2: string;
   gstin: string;
   contactInfo: string;
   ownerDetails: string;

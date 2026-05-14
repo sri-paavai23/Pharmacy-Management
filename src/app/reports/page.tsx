@@ -45,7 +45,7 @@ export default async function ReportsPage(props: { searchParams: Promise<{ perio
           batch: { 
             include: { 
               product: { 
-                select: { name: true, taxRate: true, scheduleH1: true, id: true, category: true, manufacturer: true, hsnCode: true, isPrescriptionRequired: true, packSize: true } 
+                select: { name: true, taxRate: true, scheduleH1: true, id: true, category: true, manufacturer: true, hsnCode: true, isPrescriptionRequired: true, packSize: true, form: true } 
               } 
             } 
           } 

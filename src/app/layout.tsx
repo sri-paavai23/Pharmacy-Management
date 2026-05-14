@@ -32,6 +32,7 @@ export default async function RootLayout({
   const fallbackSettings: BusinessSettings = {
     pharmacyName: "Vellammal Pharmacy",
     dlNumber: "",
+    dlNumber2: "",
     gstin: "",
     contactInfo: "",
     ownerDetails: ""
@@ -40,6 +41,7 @@ export default async function RootLayout({
   const settings: BusinessSettings = settingsResult ? {
     pharmacyName: settingsResult.pharmacyName,
     dlNumber: settingsResult.dlNumber,
+    dlNumber2: settingsResult.dlNumber2,
     gstin: settingsResult.gstin,
     contactInfo: settingsResult.contactInfo,
     ownerDetails: settingsResult.ownerDetails,
