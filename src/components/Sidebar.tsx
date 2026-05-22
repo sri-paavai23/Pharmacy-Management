@@ -12,7 +12,7 @@ import {
   Activity,
   ShoppingBag,
   RotateCcw,
-  Settings,
+  ShieldCheck,
   BookOpen,
   Library,
   Clock
@@ -32,7 +32,7 @@ const navItems = [
   { name: 'Returns', href: '/returns', icon: RotateCcw },
   { name: 'Courier Process', href: '/senior-care', icon: Truck },
   { name: 'Reports', href: '/reports', icon: LineChart },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Mastery', href: '/settings', icon: ShieldCheck },
 ];
 
 

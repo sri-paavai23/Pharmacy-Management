@@ -1,5 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
-const p = new PrismaClient();
+const { PrismaMariaDb } = require('@prisma/adapter-mariadb');
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL is not defined');
+}
+const adapter = new PrismaMariaDb(connectionString);
+const p = new PrismaClient({ adapter });
 
 async function main() {
   // MariaDB 11.4+ (Vector-aware) — we can use VEC_AsText if needed,

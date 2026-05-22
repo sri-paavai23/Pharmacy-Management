@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaMariaDb } from '@prisma/adapter-mariadb'
 import { randomUUID } from 'crypto'
 
-const prisma = new PrismaClient()
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) throw new Error('DATABASE_URL not set')
+const adapter = new PrismaMariaDb(connectionString)
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   console.log('--- Resetting Database ---')

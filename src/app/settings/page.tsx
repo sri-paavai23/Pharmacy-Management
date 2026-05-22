@@ -25,7 +25,7 @@ export default async function SettingsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 border-l-4 border-primary pl-4 rounded-sm">
-            System Settings
+            System Mastery
           </h1>
           <p className="text-slate-500 mt-1 pl-5">Configure pharmacy registries and staff access.</p>
         </div>

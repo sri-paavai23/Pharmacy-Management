@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, ShoppingBag, Truck, Calendar } from "lucide-react";
+import { Plus, Trash2, ShoppingBag, Truck, Calendar, Search, Edit3, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type PurchaseWithDetails = purchase & {
@@ -20,10 +20,11 @@ export function PurchasesClient({ products, vendors, purchases }: {
   vendors: vendor[],
   purchases: PurchaseWithDetails[]
 }) {
-  const [activeTab, setActiveTab] = useState<"list" | "new">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "new" | "manage">("list");
   const [loading, setLoading] = useState(false);
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [vendorSearchText, setVendorSearchText] = useState("");
+  const [manageSearchText, setManageSearchText] = useState("");
 
   const [invoiceMetadata, setInvoiceMetadata] = useState({
     vendorId: "",
@@ -111,9 +112,10 @@ export function PurchasesClient({ products, vendors, purchases }: {
     setLoading(true);
     try {
       if (editingPurchaseId) {
-        await deletePurchaseInvoice(editingPurchaseId);
+        const delRes = await deletePurchaseInvoice(editingPurchaseId);
+        if (delRes?.error) throw new Error(delRes.error);
       }
-      await processPurchaseInvoice({
+      const res = await processPurchaseInvoice({
         vendorId: invoiceMetadata.vendorId,
         financialYearId: fyId,
         invoiceNumber: invoiceMetadata.invoiceNumber,
@@ -126,6 +128,7 @@ export function PurchasesClient({ products, vendors, purchases }: {
           productId: item.isExistingProduct === "yes" ? item.productId : undefined
         }))
       });
+      if (res?.error) throw new Error(res.error);
       alert(editingPurchaseId ? "Purchase updated successfully!" : "Stock added successfully!");
       setEditingPurchaseId(null);
       setInvoiceMetadata({ vendorId: "", invoiceNumber: "", totalAmount: 0, roundOff: 0, date: new Date().toISOString().split('T')[0] });
@@ -137,6 +140,24 @@ export function PurchasesClient({ products, vendors, purchases }: {
       setLoading(false);
     }
   };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this purchase? This will revert stock and accounting entries.")) return;
+    setLoading(true);
+    try {
+      const res = await deletePurchaseInvoice(id);
+      if (res?.error) throw new Error(res.error);
+      alert("Purchase deleted successfully");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error deleting purchase");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPurchases = purchases.filter(p => 
+    p.Vendor.companyName.toLowerCase().includes(manageSearchText.toLowerCase()) || 
+    p.invoiceNumber.toLowerCase().includes(manageSearchText.toLowerCase())
+  );
 
   // shared select style
   const sel = "h-8 w-full border border-slate-200 bg-white px-1.5 text-[11px] font-semibold uppercase rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer";
@@ -145,6 +166,23 @@ export function PurchasesClient({ products, vendors, purchases }: {
   const handleKeyDown = (e: React.KeyboardEvent, idx: number, field: string) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      
+      // If we are in the header, move to next header field or first row
+      if (idx === -1) {
+        const headerInputs = ['vendor-input', 'date-input', 'invoice-input', 'total-input'];
+        const currentIdx = headerInputs.indexOf(field);
+        if (currentIdx !== -1 && currentIdx < headerInputs.length - 1) {
+          document.getElementById(headerInputs[currentIdx + 1])?.focus();
+        } else {
+          // Move to first row, first focusable element (Type select)
+          const firstRow = document.querySelector('tbody tr');
+          if (firstRow) {
+            (firstRow.querySelector('select, input') as HTMLElement)?.focus();
+          }
+        }
+        return;
+      }
+
       const row = e.currentTarget.closest('tr');
       if (row) {
         const inputs = Array.from(row.querySelectorAll('input, select')) as HTMLElement[];
@@ -171,6 +209,9 @@ export function PurchasesClient({ products, vendors, purchases }: {
           <button onClick={() => { setActiveTab("list"); setEditingPurchaseId(null); setInvoiceMetadata({ vendorId: "", invoiceNumber: "", totalAmount: 0, roundOff: 0, date: new Date().toISOString().split('T')[0] }); setInvoiceItems([emptyItem()]); }} className={cn("px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2", activeTab === "list" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-800")}>
             <ShoppingBag className="w-3.5 h-3.5" /> Purchase History
           </button>
+          <button onClick={() => { setActiveTab("manage"); setEditingPurchaseId(null); }} className={cn("px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2", activeTab === "manage" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-800")}>
+            <FileText className="w-3.5 h-3.5" /> Manage Invoices
+          </button>
           <button onClick={() => { setActiveTab("new"); setEditingPurchaseId(null); setInvoiceMetadata({ vendorId: "", invoiceNumber: "", totalAmount: 0, roundOff: 0, date: new Date().toISOString().split('T')[0] }); setInvoiceItems([emptyItem()]); }} className={cn("px-5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2", activeTab === "new" ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-800")}>
             <Plus className="w-3.5 h-3.5" /> {editingPurchaseId ? 'Edit Purchase Invoice' : 'Log New Purchase'}
           </button>
@@ -190,17 +231,11 @@ export function PurchasesClient({ products, vendors, purchases }: {
                     <p className="text-[10px] text-slate-400 font-mono">Invoice: {p.invoiceNumber}</p>
                   </div>
                 </div>
-                <div className="text-right flex items-center gap-4">
-                  <div>
-                    <p className="font-black text-slate-900">₹{p.totalAmount.toFixed(2)}</p>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1 justify-end"><Calendar className="w-3 h-3" />{new Date(p.date).toLocaleDateString('en-GB')}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(p)} className="h-8 text-primary bg-primary/5 hover:bg-primary/10">
-                    Edit
-                  </Button>
+                <div className="text-right">
+                  <p className="font-black text-slate-900">₹{p.totalAmount.toFixed(2)}</p>
+                  <p className="text-[10px] text-slate-400 flex items-center gap-1 justify-end"><Calendar className="w-3 h-3" />{new Date(p.date).toLocaleDateString('en-GB')}</p>
                 </div>
               </div>
-              <div className="pb-3"></div>
             </div>
           ))}
           {purchases.length === 0 && (
@@ -208,6 +243,68 @@ export function PurchasesClient({ products, vendors, purchases }: {
               No purchases yet. Log your first invoice.
             </div>
           )}
+        </div>
+      )}
+
+      {/* ────────── MANAGE INVOICES ────────── */}
+      {activeTab === "manage" && (
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Input 
+              className="pl-10 h-12 rounded-xl bg-white border-slate-200 shadow-sm"
+              placeholder="Search by Vendor or Invoice Number..." 
+              value={manageSearchText}
+              onChange={e => setManageSearchText(e.target.value)}
+            />
+          </div>
+
+          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead className="pl-6">Invoice Info</TableHead>
+                  <TableHead>Vendor</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right pr-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPurchases.map(p => (
+                  <TableRow key={p.id} className="hover:bg-slate-50 transition-colors">
+                    <TableCell className="pl-6 py-4">
+                      <div className="font-bold text-slate-800">{p.invoiceNumber}</div>
+                      <div className="text-[10px] text-slate-500">{new Date(p.date).toLocaleDateString()}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-slate-700">{p.Vendor.companyName}</div>
+                      <div className="text-[10px] text-slate-400 uppercase">{p.Vendor.gstin}</div>
+                    </TableCell>
+                    <TableCell className="text-right font-black text-slate-900">
+                      ₹{p.totalAmount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(p)} className="h-8 text-primary border-primary/20 hover:bg-primary/5">
+                          <Edit3 className="w-3.5 h-3.5 mr-1" /> Edit
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)} className="h-8 text-red-500 hover:bg-red-50 hover:text-red-600">
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredPurchases.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-12 text-slate-400 italic">
+                      No matching invoices found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
@@ -220,8 +317,9 @@ export function PurchasesClient({ products, vendors, purchases }: {
             <div className="space-y-1 md:col-span-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Vendor</Label>
               <div className="relative">
-                <Input list="vendor-list" className={cn(inp, "h-9 font-semibold")} placeholder="Search vendor..."
+                <Input id="vendor-input" list="vendor-list" className={cn(inp, "h-9 font-semibold")} placeholder="Search vendor..."
                   value={vendorSearchText}
+                  onKeyDown={e => handleKeyDown(e, -1, 'vendor-input')}
                   onChange={e => { 
                     setVendorSearchText(e.target.value);
                     const v = vendors.find(x => x.companyName === e.target.value); 
@@ -233,15 +331,21 @@ export function PurchasesClient({ products, vendors, purchases }: {
             </div>
             <div className="space-y-1">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Invoice Date</Label>
-              <Input type="date" className={cn(inp, "h-9")} value={invoiceMetadata.date} onChange={e => setInvoiceMetadata(p => ({ ...p, date: e.target.value }))} />
+              <Input id="date-input" type="date" className={cn(inp, "h-9")} value={invoiceMetadata.date} 
+                onKeyDown={e => handleKeyDown(e, -1, 'date-input')}
+                onChange={e => setInvoiceMetadata(p => ({ ...p, date: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Invoice No.</Label>
-              <Input className={cn(inp, "h-9 font-mono font-bold uppercase")} placeholder="V-XXXXX" value={invoiceMetadata.invoiceNumber} onChange={e => setInvoiceMetadata(p => ({ ...p, invoiceNumber: e.target.value }))} />
+              <Input id="invoice-input" className={cn(inp, "h-9 font-mono font-bold uppercase")} placeholder="V-XXXXX" value={invoiceMetadata.invoiceNumber} 
+                onKeyDown={e => handleKeyDown(e, -1, 'invoice-input')}
+                onChange={e => setInvoiceMetadata(p => ({ ...p, invoiceNumber: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bill Total (₹)</Label>
-              <Input type="number" className={cn(inp, "h-9 font-bold")} placeholder="0.00" value={invoiceMetadata.totalAmount || ''} onChange={e => setInvoiceMetadata(p => ({ ...p, totalAmount: parseFloat(e.target.value) || 0 }))} />
+              <Input id="total-input" type="number" className={cn(inp, "h-9 font-bold")} placeholder="0.00" value={invoiceMetadata.totalAmount || ''} 
+                onKeyDown={e => handleKeyDown(e, -1, 'total-input')}
+                onChange={e => setInvoiceMetadata(p => ({ ...p, totalAmount: parseFloat(e.target.value) || 0 }))} />
             </div>
           </div>
 
@@ -345,14 +449,25 @@ export function PurchasesClient({ products, vendors, purchases }: {
 
                       {/* FORM */}
                       <TableCell className="w-28">
-                        <select value={item.form} 
+                        <Input list="form-list" value={item.form} 
+                          className={cn(inp, "text-center font-bold uppercase")}
                           onKeyDown={e => handleKeyDown(e, idx, 'form')}
-                          onChange={e => { const next = [...invoiceItems]; next[idx].form = e.target.value; setInvoiceItems(next); }} className={sel}>
+                          onChange={e => { const next = [...invoiceItems]; next[idx].form = e.target.value.toUpperCase(); setInvoiceItems(next); }} />
+                        <datalist id="form-list">
                           <option value="TABLET">Tablet</option>
                           <option value="SYRUP">Syrup</option>
                           <option value="INJECTION">Injection</option>
+                          <option value="CAPSULE">Capsule</option>
+                          <option value="CREAM">Cream</option>
+                          <option value="GEL">Gel</option>
+                          <option value="OINTMENT">Ointment</option>
+                          <option value="DROPS">Drops</option>
+                          <option value="INHALER">Inhaler</option>
+                          <option value="PATCH">Patch</option>
+                          <option value="SPRAY">Spray</option>
+                          <option value="POWDER">Powder</option>
                           <option value="COSMETICS">Cosmetics</option>
-                        </select>
+                        </datalist>
                       </TableCell>
 
                       {/* HSN */}

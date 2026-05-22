@@ -38,7 +38,8 @@ export function InventoryClient({ products }: { products: ProductWithBatches[] }
     }
     setLoading(true);
     try {
-      await adjustStock(selectedBatch.id, parseInt(quantity), type, reason);
+      const res = await adjustStock(selectedBatch.id, parseInt(quantity), type, reason);
+      if (res?.error) throw new Error(res.error);
       setOpenModal(false);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to adjust stock");

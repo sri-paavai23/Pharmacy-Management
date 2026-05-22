@@ -8,34 +8,39 @@ import { randomUUID } from "crypto";
 
 
 export async function adjustStock(batchId: string, quantity: number, type: "Addition" | "Reduction", reason: string) {
-  const batch = await prisma.batch.findUnique({ where: { id: batchId } });
-  
-  if (!batch) throw new Error("Batch not found");
+  try {
+    const batch = await prisma.batch.findUnique({ where: { id: batchId } });
+    
+    if (!batch) throw new Error("Batch not found");
 
-  const newStock = type === "Addition" ? batch.currentStock + quantity : batch.currentStock - quantity;
+    const newStock = type === "Addition" ? batch.currentStock + quantity : batch.currentStock - quantity;
 
-  if (newStock < 0) {
-    throw new Error("Resulting stock cannot be less than 0");
+    if (newStock < 0) {
+      throw new Error("Resulting stock cannot be less than 0");
+    }
+
+    await prisma.$transaction([
+      prisma.stockadjustment.create({
+        data: {
+          id: randomUUID(),
+          batchId,
+          type,
+          reason,
+          quantity,
+        }
+      }),
+      prisma.batch.update({
+        where: { id: batchId },
+        data: { currentStock: newStock }
+      })
+    ]);
+
+    revalidatePath('/inventory');
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (e: any) {
+    return { error: e.message || "Failed to adjust stock" };
   }
-
-  await prisma.$transaction([
-    prisma.stockadjustment.create({
-      data: {
-        id: randomUUID(),
-        batchId,
-        type,
-        reason,
-        quantity,
-      }
-    }),
-    prisma.batch.update({
-      where: { id: batchId },
-      data: { currentStock: newStock }
-    })
-  ]);
-
-  revalidatePath('/inventory');
-  revalidatePath('/dashboard');
 }
 
 export async function processPurchaseInvoice(data: {
@@ -65,7 +70,8 @@ export async function processPurchaseInvoice(data: {
   }>;
   invoiceDate?: string | Date; // Added optional invoice date
 }) {
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  try {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 
     // 1. Validate FY and find core ledgers
     const purchaseGroup = await tx.accountgroup.findFirst({ where: { name: "Purchase Accounts" } });
@@ -304,11 +310,16 @@ export async function processPurchaseInvoice(data: {
       });
     }
   }).catch(err => {
-    console.error("TRANSACTION ERROR:", err);
-    throw err;
-  });
-  revalidatePath('/inventory');
-  revalidatePath('/purchases');
+      console.error("TRANSACTION ERROR:", err);
+      throw err;
+    });
+    revalidatePath('/inventory');
+    revalidatePath('/purchases');
+    return { success: true };
+  } catch (err: any) {
+    console.error("Purchase processing error:", err);
+    return { error: err.message || "Failed to process purchase" };
+  }
 }
 
 /**
@@ -341,7 +352,8 @@ export async function generateProductEmbeddings() {
 }
 
 export async function deletePurchaseInvoice(purchaseId: string) {
-  await prisma.$transaction(async (tx) => {
+  try {
+    await prisma.$transaction(async (tx) => {
     const purchase = await tx.purchase.findUnique({ where: { id: purchaseId }, include: { purchaseitem: true } });
     if (!purchase) throw new Error("Purchase not found");
     
@@ -372,7 +384,11 @@ export async function deletePurchaseInvoice(purchaseId: string) {
     }
 
     await tx.purchase.delete({ where: { id: purchaseId } });
-  });
-  revalidatePath('/inventory');
-  revalidatePath('/purchases');
+    });
+    revalidatePath('/inventory');
+    revalidatePath('/purchases');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "Failed to delete purchase invoice" };
+  }
 }
